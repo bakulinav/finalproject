@@ -10,6 +10,7 @@
   <modules>
     <module>common</module>
     <module>datagenerator</module>
+    <module>hive</module>
     <module>rdd</module>
     <module>datasets</module>
   </modules>
