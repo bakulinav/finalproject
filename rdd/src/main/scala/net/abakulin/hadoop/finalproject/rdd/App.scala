@@ -1,5 +1,7 @@
 package net.abakulin.hadoop.finalproject.rdd
 
+import java.sql.DriverManager
+
 import net.abakulin.hadoop.finalproject.common.{Product, Purchase}
 import org.apache.commons.net.util.SubnetUtils
 import org.apache.hadoop.io.Text
@@ -35,8 +37,8 @@ object App {
       .map(arr => Purchase(Product(arr(0), arr(3)), arr(1).toDouble, arr(2), arr(4)))
 
     mode.toLowerCase match {
-      case "top10categories" => getTop10Categories(purchs).foreach(println(_))
-      case "top10products" => getTop10ProductsInCategory(purchs).foreach(cat => println(cat._1 + ":\n" + cat._2.foldLeft("")((a, b) =>  a + "" + b._1 + ":" + b._2 + "\n") ))
+      case "top10categories" => getTop10Categories(purchs)
+      case "top10products" => getTop10ProductsInCategory(purchs)
       case "top10countries" => {
         val networksRdd = sc.textFile("/user/cloudera/Country-Blocks-IPv4.csv")
         val countriesRdd = sc.textFile("/user/cloudera/Country-Locations-en.csv")
@@ -45,21 +47,37 @@ object App {
 
         val ipRangeToCountryBcst = sc.broadcast(ipRangeToCountry)
 
-        getTop10Countries(purchs, ipRangeToCountryBcst).foreach(el => println(f"${el._1} : ${el._2}%.2f"))
+        getTop10Countries(purchs, ipRangeToCountryBcst)
       }
     }
 
+    sc.stop()
   }
 
-  def getTop10Categories(purchs : RDD[Purchase]) : Array[(String, Int)] = {
+  def getTop10Categories(purchs : RDD[Purchase]) {
+
+    val conn = getConnection()
+    val stmt = conn.prepareStatement("INSERT INTO top10CategoryRdd(category, cnt) VALUES (?, ?)")
+
     purchs
       .map(p => (p.product.category, 1))
       .groupByKey()
       .mapValues(cnt => cnt.sum)
       .takeOrdered(10)(Ordering.by(p => -p._2))
+      .foreach(x => {
+          stmt.setString(1, x._1)
+          stmt.setInt(2, x._2)
+          stmt.executeUpdate()
+        }
+      )
+
+    conn.close()
   }
 
-  def getTop10ProductsInCategory(purchs: RDD[Purchase]): Array[(String, List[(String, Int)])] = {
+  def getTop10ProductsInCategory(purchs: RDD[Purchase]) = {
+    val conn = getConnection()
+    val stmt = conn.prepareStatement("INSERT INTO top10ProductRdd(category, product, cnt) VALUES (?, ?, ?)")
+
     purchs
       .map(p => ((p.product.category, p.product.name), 1))
       .groupByKey()
@@ -67,7 +85,41 @@ object App {
       .map(el => (el._1._1, (el._1._2, el._2)))
       .groupByKey()
       .mapValues(a => a.toList.sortBy(p => -p._2).take(10))
+      .flatMap(x => x._2.toArray.map(el => (x._1, el._1, el._2)))
       .collect()
+      .foreach(x => {
+          stmt.setString(1, x._1)
+          stmt.setString(2, x._2)
+          stmt.setInt(3, x._3)
+          stmt.executeUpdate()
+        }
+      )
+
+    conn.close()
+  }
+
+  def getTop10Countries(purchs: RDD[Purchase], ipRangeToCountryBcst: Broadcast[Array[((Long, Long), String)]]) = {
+    val ipRangeToCountry = ipRangeToCountryBcst.value
+    val resolveCountry: Long => String = getCountryByIp(ipRangeToCountry)
+
+    val conn = getConnection()
+    val stmt = conn.prepareStatement("INSERT INTO top10CountryRdd(country, value) VALUES (?, ?)")
+
+    purchs
+      .map(p => (ipToLong(p.clientIp), p.price))
+      .map(x => (resolveCountry(x._1), x._2))
+      .groupByKey()
+      .mapValues(lst => lst.sum)
+      .takeOrdered(10)(Ordering.by(p => -p._2))
+      .foreach(
+        x => {
+          stmt.setString(1, x._1)
+          stmt.setDouble(2, x._2)
+          stmt.executeUpdate()
+        }
+      )
+
+    conn.close()
   }
 
   def getCountryByIp(ipRangeToCountry: Array[((Long, Long), String)])(ip:Long) = {
@@ -92,18 +144,6 @@ object App {
     }
 
     binarySearch(ip, 0, ipRangeToCountry.length - 1)
-  }
-
-  def getTop10Countries(purchs: RDD[Purchase], ipRangeToCountryBcst: Broadcast[Array[((Long, Long), String)]]): Array[(String, Double)] = {
-    val ipRangeToCountry = ipRangeToCountryBcst.value
-    val resolveCountry: Long => String = getCountryByIp(ipRangeToCountry)
-
-    purchs
-      .map(p => (ipToLong(p.clientIp), p.price))
-      .map(x => (resolveCountry(x._1), x._2))
-      .groupByKey()
-      .mapValues(lst => lst.sum)
-      .takeOrdered(10)(Ordering.by(p => -p._2))
   }
 
   def getGeoIdToNetwork(networksRdd: RDD[String]): RDD[(String, String)] = {
@@ -151,5 +191,9 @@ object App {
       .zip(Array(24, 16, 8, 0))
       .map(a => a._1 << a._2)
       .sum
+  }
+
+  def getConnection() = {
+    DriverManager.getConnection("jdbc:mysql://localhost:3306/events", "root", "cloudera")
   }
 }

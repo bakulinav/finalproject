@@ -1,0 +1,23 @@
+CREATE TABLE top10categories (category TEXT, cnt INT);
+
+sqoop export \
+    --connect jdbc:mysql://localhost/events \
+    --username root --password cloudera \
+    --table top10categories -m 1 \
+    --export-dir hdfs:///user/cloudera/hive/top10Categories
+
+CREATE TABLE top10products (category TEXT, product TEXT, cnt INT, pos INT);
+
+sqoop export \
+    --connect jdbc:mysql://localhost/events \
+    --username root --password cloudera \
+    --table top10products -m 1 \
+    --export-dir hdfs:///user/cloudera/hive/top10Products
+
+CREATE TABLE top10countries (country_name TEXT, value FLOAT);
+
+sqoop export \
+    --connect jdbc:mysql://localhost/events \
+    --username root --password cloudera \
+    --table top10countries -m 1 \
+    --export-dir hdfs:///user/cloudera/hive/top10countries

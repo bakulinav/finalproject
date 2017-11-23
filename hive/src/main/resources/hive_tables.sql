@@ -47,3 +47,59 @@ TBLPROPERTIES ("skip.header.line.count"="1");
 
 LOAD DATA INPATH '/user/cloudera/Country-Locations-en.csv' INTO TABLE countries;
 
+ADD JAR 'hdfs:///user/cloudera/udf-1.0.jar';
+ADD JAR 'hdfs:///user/cloudera/hive-1.0.jar';
+
+CREATE FUNCTION lowIp as 'net.abakulin.hadoop.finalproject.hive.LowIPFromNetwork' using jar 'hdfs:///user/cloudera/hive-1.0.jar';
+CREATE FUNCTION highIp as 'net.abakulin.hadoop.finalproject.hive.HighIPFromNetwork' using jar 'hdfs:///user/cloudera/hive-1.0.jar';
+CREATE FUNCTION ipToLong as 'net.abakulin.hadoop.finalproject.hive.IPToLong' using jar 'hdfs:///user/cloudera/hive-1.0.jar';
+CREATE FUNCTION ipToGeo as 'net.abakulin.hadoop.finalproject.udf.IpToGeo' using jar 'hdfs:///user/cloudera/udf-1.0.jar';
+
+DROP TABLE ips;
+
+CREATE TABLE ips
+    ROW FORMAT DELIMITED FIELDS TERMINATED BY ","
+    STORED AS TEXTFILE
+AS
+  SELECT x.network, x.low, x.high, x.low_num, x.high_num, x.geo_id as geoname_id FROM (
+    SELECT
+        network,
+        lowIp(network) AS low,
+        highIp(network) AS high,
+        ipToNum(lowIp(network)) AS low_num,
+        ipToNum(highIp(network)) AS high_num,
+        COALESCE(geoname_id, registered_country_geoname_id, represented_country_geoname_id) AS geo_id
+      FROM networks
+    ) x
+  WHERE x.geo_id IS NOT NULL SORT BY x.low_num, x.high_num
+;
+
+-- TOP tables
+DROP TABLE top10Categories;
+CREATE TABLE IF NOT EXISTS top10Categories (
+  category STRING,
+  cnt INT
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ","
+STORED AS TEXTFILE
+LOCATION 'hdfs:///user/cloudera/hive/top10Categories';
+
+DROP TABLE top10Products;
+CREATE TABLE IF NOT EXISTS top10Products (
+  category STRING,
+  product STRING,
+  cnt INT,
+  pos INT
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ","
+STORED AS TEXTFILE
+LOCATION 'hdfs:///user/cloudera/hive/top10Products';
+
+DROP TABLE top10Countries;
+CREATE TABLE IF NOT EXISTS top10Countries (
+  country_name STRING,
+  value DOUBLE
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ","
+STORED AS TEXTFILE
+LOCATION 'hdfs:///user/cloudera/hive/top10countries';

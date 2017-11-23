@@ -13,6 +13,7 @@
     <module>hive</module>
     <module>rdd</module>
     <module>datasets</module>
+      <module>udf</module>
   </modules>
 
   <name>${project.artifactId}</name>

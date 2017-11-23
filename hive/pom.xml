@@ -11,6 +11,11 @@
 
     <name>${project.artifactId}</name>
 
+    <properties>
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
+    </properties>
+
     <dependencies>
 
         <dependency>
@@ -26,8 +31,14 @@
         <!-- https://mvnrepository.com/artifact/org.apache.hadoop.hive/hive-common -->
         <dependency>
             <groupId>org.apache.hive</groupId>
-            <artifactId>hive-common</artifactId>
+            <artifactId>hive-exec</artifactId>
             <version>2.3.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.tools.version}</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -69,11 +80,11 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>net.abakulin.hadoop.finalproject.hive.App</mainClass>
-                                </transformer>
-                            </transformers>
+                            <!--<transformers>-->
+                                <!--<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">-->
+                                    <!--<mainClass>net.abakulin.hadoop.finalproject.hive.App</mainClass>-->
+                                <!--</transformer>-->
+                            <!--</transformers>-->
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -90,4 +101,18 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>cluster</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.hive</groupId>
+                    <artifactId>hive-exec</artifactId>
+                    <version>2.3.2</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>
