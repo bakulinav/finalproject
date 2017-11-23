@@ -61,8 +61,7 @@ object App {
 
     purchs
       .map(p => (p.product.category, 1))
-      .groupByKey()
-      .mapValues(cnt => cnt.sum)
+      .reduceByKey(_+_)
       .takeOrdered(10)(Ordering.by(p => -p._2))
       .foreach(x => {
           stmt.setString(1, x._1)
@@ -80,8 +79,7 @@ object App {
 
     purchs
       .map(p => ((p.product.category, p.product.name), 1))
-      .groupByKey()
-      .mapValues(lst => lst.sum)
+      .reduceByKey(_+_)
       .map(el => (el._1._1, (el._1._2, el._2)))
       .groupByKey()
       .mapValues(a => a.toList.sortBy(p => -p._2).take(10))
@@ -108,8 +106,7 @@ object App {
     purchs
       .map(p => (ipToLong(p.clientIp), p.price))
       .map(x => (resolveCountry(x._1), x._2))
-      .groupByKey()
-      .mapValues(lst => lst.sum)
+      .reduceByKey(_+_)
       .takeOrdered(10)(Ordering.by(p => -p._2))
       .foreach(
         x => {

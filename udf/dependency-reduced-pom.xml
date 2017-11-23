@@ -8,6 +8,8 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>udf</artifactId>
   <build>
+    <sourceDirectory>src/main/java</sourceDirectory>
+    <testSourceDirectory>src/test/java</testSourceDirectory>
     <plugins>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -43,6 +45,18 @@
           <groupId>org.apache.hive</groupId>
           <artifactId>hive-exec</artifactId>
           <version>2.3.2</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>log4j-api</artifactId>
+          <version>2.9.1</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>log4j-core</artifactId>
+          <version>2.9.1</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
