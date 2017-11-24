@@ -9,11 +9,11 @@
 
   <modules>
     <module>common</module>
+    <module>udf</module>
     <module>datagenerator</module>
     <module>hive</module>
     <module>rdd</module>
     <module>datasets</module>
-      <module>udf</module>
   </modules>
 
   <name>${project.artifactId}</name>
@@ -21,8 +21,8 @@
   <description>Core module of final project</description>
 
   <properties>
-    <maven.compiler.source>1.6</maven.compiler.source>
-    <maven.compiler.target>1.6</maven.compiler.target>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
     <encoding>UTF-8</encoding>
     <scala.tools.version>2.10</scala.tools.version>
     <scala.version>2.10.6</scala.version>
@@ -71,32 +71,4 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
-  <build>
-    <sourceDirectory>src/main/scala</sourceDirectory>
-    <testSourceDirectory>src/test/scala</testSourceDirectory>
-    <plugins>
-      <plugin>
-        <!-- see http://davidb.github.com/scala-maven-plugin -->
-        <groupId>net.alchim31.maven</groupId>
-        <artifactId>scala-maven-plugin</artifactId>
-        <version>3.1.3</version>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.13</version>
-        <configuration>
-          <useFile>false</useFile>
-          <disableXmlReport>true</disableXmlReport>
-          <!-- If you have classpath issue like NoDefClassError,... -->
-          <!-- useManifestOnlyJar>false</useManifestOnlyJar -->
-          <includes>
-            <include>**/*Test.*</include>
-            <include>**/*Suite.*</include>
-          </includes>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>

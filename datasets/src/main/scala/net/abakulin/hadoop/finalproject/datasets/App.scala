@@ -37,7 +37,8 @@ object App {
     val purchs = sc.sequenceFile(path, classOf[Text], classOf[Text])
       .map(a => a._2.toString)
       .map(str => str.split(","))
-      .map(arr => Purchase(Product(arr(0), arr(3)), arr(1).toDouble, arr(2), arr(4))).toDS()
+      .map(arr => Purchase(Product(arr(0), arr(3)), arr(1).toDouble, arr(2), arr(4)))
+      .toDS()
 
     val prop = new java.util.Properties
     prop.setProperty("driver", "com.mysql.jdbc.Driver")

@@ -22,9 +22,11 @@ set hive.auto.convert.join=false;
 # top 10 countries
 INSERT OVERWRITE TABLE top10Countries
   SELECT country_name, value FROM (
-    SELECT ipToGeo(purch2.clientIp) as geo_id, sum(purch2.price) as value
-        FROM (SELECT * FROM purchases WHERE clientIp != '0.0.0.0') purch2
-        GROUP BY purch2.clientIp
+    SELECT purch2.geo_id, sum(purch2.price) as value
+        FROM (
+          SELECT ipToGeo(clientIp) as geo_id, price FROM purchases WHERE clientIp != '0.0.0.0'
+        ) purch2
+        GROUP BY purch2.geo_id
         ORDER BY value DESC
         LIMIT 10
   ) t
